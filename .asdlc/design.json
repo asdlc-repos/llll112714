@@ -1,0 +1,28 @@
+{
+  "overview": "A minimal single-service architecture exposing a Hello World REST API. The service is implemented in Go using net/http, containerized with Docker, and deployed on Kubernetes as a backend service.",
+  "requirements": [
+    "Expose GET /hello returning JSON greeting with HTTP 200",
+    "Include Content-Type: application/json header on all responses",
+    "Return 404 for non-existent endpoints",
+    "Return 405 for unsupported HTTP methods",
+    "Respond within 200ms under normal load",
+    "Handle 100+ concurrent requests",
+    "Log timestamp, method, path, and status code for each request",
+    "Return 500 and log details on unhandled exceptions",
+    "Provide /health endpoint for liveness checks"
+  ],
+  "components": [
+    {
+      "name": "hello-api",
+      "componentType": "service",
+      "language": "Go",
+      "dependsOn": [],
+      "entrypoint": "deployment/service",
+      "buildpack": "docker",
+      "appPath": "/hello-api",
+      "openAPISpec": "openapi: 3.0.3\ninfo:\n  title: Hello World API\n  version: 1.0.0\n  description: Simple Hello World REST API\nservers:\n  - url: http://localhost:9090\npaths:\n  /hello:\n    get:\n      summary: Returns a Hello World greeting\n      operationId: getHello\n      responses:\n        '200':\n          description: Successful greeting response\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Greeting'\n        '405':\n          description: Method Not Allowed\n        '500':\n          description: Internal Server Error\n  /health:\n    get:\n      summary: Health check\n      operationId: getHealth\n      responses:\n        '200':\n          description: Service healthy\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Health'\ncomponents:\n  schemas:\n    Greeting:\n      type: object\n      properties:\n        message:\n          type: string\n          example: Hello World\n      required: [message]\n    Health:\n      type: object\n      properties:\n        status:\n          type: string\n          example: ok\n      required: [status]\n",
+      "componentAgentInstructions": "Implement a Go backend service using the standard library net/http package, listening on port 9090.\n\nEndpoints:\n- GET /hello → respond 200 with JSON body {\"message\":\"Hello World\"}. For any other method on /hello, return 405 Method Not Allowed.\n- GET /health → respond 200 with JSON body {\"status\":\"ok\"}.\n- Any other path → return 404 Not Found with JSON body {\"error\":\"not found\"}.\n\nAll responses MUST set header Content-Type: application/json.\n\nMiddleware:\n- Logging middleware that logs timestamp (RFC3339), HTTP method, path, and response status code for every request. Use a responseWriter wrapper to capture status.\n- Recovery middleware that recovers from panics, logs the error and stack trace, and returns HTTP 500 with JSON body {\"error\":\"internal server error\"}.\n\nUse http.ServeMux. Implement graceful shutdown on SIGINT/SIGTERM with 10s timeout. Provide a Dockerfile using multi-stage build (golang:1.22-alpine → distroless/static or alpine), exposing port 9090. Include go.mod with module name hello-api."
+    }
+  ],
+  "sourceSpec": "spec-v1"
+}
