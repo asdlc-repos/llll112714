@@ -1,0 +1,38 @@
+{
+  "strategy": "Bottom-Up",
+  "overview": "Single independent service with no dependencies; implemented in one phase.",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Foundation Service",
+      "description": "Implement the standalone Hello World REST API service.",
+      "components": [
+        {
+          "name": "hello-api",
+          "componentType": "service",
+          "language": "Go",
+          "deployment": "Docker",
+          "responsibilities": [
+            "Expose GET /hello returning a JSON greeting",
+            "Provide /health liveness endpoint",
+            "Handle 404 and 405 errors with JSON responses",
+            "Log request metadata via middleware",
+            "Recover from panics and return HTTP 500"
+          ],
+          "architectureContext": "Sole backend service in the system, exposed externally via Kubernetes. No upstream/downstream service dependencies.",
+          "keyConsiderations": [
+            "Use net/http standard library on port 9090",
+            "Multi-stage Docker build (golang:1.22-alpine → distroless/static)",
+            "Graceful shutdown on SIGINT/SIGTERM with 10s timeout",
+            "responseWriter wrapper to capture status codes for logging",
+            "Ensure Content-Type: application/json on all responses"
+          ],
+          "apiContract": "openapi: 3.0.3\ninfo:\n  title: Hello World API\n  version: 1.0.0\n  description: Simple Hello World REST API\nservers:\n  - url: http://localhost:9090\npaths:\n  /hello:\n    get:\n      summary: Returns a Hello World greeting\n      operationId: getHello\n      responses:\n        '200':\n          description: Successful greeting response\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Greeting'\n        '405':\n          description: Method Not Allowed\n        '500':\n          description: Internal Server Error\n  /health:\n    get:\n      summary: Health check\n      operationId: getHealth\n      responses:\n        '200':\n          description: Service healthy\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Health'\ncomponents:\n  schemas:\n    Greeting:\n      type: object\n      properties:\n        message:\n          type: string\n          example: Hello World\n      required: [message]\n    Health:\n      type: object\n      properties:\n        status:\n          type: string\n          example: ok\n      required: [status]\n",
+          "dependencies": []
+        }
+      ]
+    }
+  ],
+  "sourceSpec": "spec-v1",
+  "sourceDesign": "design-v1"
+}
