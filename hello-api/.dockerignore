@@ -1,0 +1,12 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+README.md
+*.md
+.idea
+.vscode
+.DS_Store
+hello-api
+out/
+bin/
